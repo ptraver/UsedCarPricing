@@ -100,7 +100,7 @@ auto_new_Audi<-auto_new_Audi[auto_new_Audi$mileage>=1000,]
 
 #removing outlier and the again fitting the model
 
-auto_new_Audi<-auto_new_Audi[-c(70509,66699,62019,2776,23944,70715,67677,68485,5228),]
+#auto_new_Audi<-auto_new_Audi[-c(70509,66699,62019,2776,23944,70715,67677,68485,5228),]
 
 
 ## set the seed to make your partition reproductible
@@ -136,6 +136,15 @@ fit9<-lm(price ~model+age+mileage+fuelType+engine, data=train)
 trans<-as.double(0.2626263)
 fit9.new<-lm(((price^trans-1)/trans) ~model+age+mileage+fuelType+engine, data=train)
 
+#Ploynomial Regression approach
+
+fit10.ploy<-lm(log(price)~model+age+poly(newmileage,3)+fuelType+engine, data=train)
+plot(fitted(fit10.ploy),residuals(fit10.ploy))
+
+fit11.ploy<-lm(log(price)~model+age+poly(newmileage,3)+engine, data=train)
+plot(fitted(fit11.ploy),residuals(fit11.ploy))
+
+
 #fit3<-lm(price ~model+year+log(newmileage)+fuelType+engine, data=train)
 #fit4<-lm(price ~model+log(year)+log(newmileage)+fuelType+engine, data=train)
 #fit5<-lm(price ~model+log(year)+log(newmileage)+fuelType+engine+age, data=train)
@@ -154,7 +163,7 @@ influence(fit2) # regression diagnostics
 
 # diagnostic plots 
 layout(matrix(c(1,2,3,4),2,2)) # optional 4 graphs/page 
-plot(fit9.new)
+plot(fit10.ploy)
 
 
 
@@ -167,6 +176,11 @@ new_data_test6 <- data.frame(year=log(test$year),newmileage=log(test$newmileage)
 new_data_test7 <- data.frame(age=test$age,newmileage=log(test$newmileage),model=test$model,fuelType=test$fuelType,engine=test$engine)
 new_data_test8 <- data.frame(age=test$age,mileage=test$mileage,model=test$model,fuelType=test$fuelType,engine=test$engine)
 new_data_test9<- data.frame(age=test$age,mileage=test$mileage,model=test$model,fuelType=test$fuelType,engine=test$engine)
+new_data_test10<-data.frame(age=test$age,newmileage=test$newmileage,model=test$model,fuelType=test$fuelType,engine=test$engine)
+new_data_test11<-data.frame(age=test$age,newmileage=test$newmileage,model=test$model,engine=test$engine)
+
+
+
 #new_data_test3 <- data.frame(year=test$year,newmileage=log(test$newmileage),model=test$model,fuelType=test$fuelType,engine=test$engine)
 #new_data_test5 <- data.frame(year=test$year,newmileage=log(test$newmileage),model=test$model,fuelType=test$fuelType,engine=test$engine,age=test$age)
 
@@ -183,17 +197,21 @@ fit.pred6<-predict(fit6,new_data_test6)
 fit.pred7<-predict(fit7,new_data_test7)
 fit.pred8<-predict(fit8,new_data_test8)
 fit.pred9<-predict(fit9.new,new_data_test9)
+fit.pred10<-predict(fit10.ploy,new_data_test10,interval='confidence',level=0.99)
+fit.pred11<-predict(fit11.ploy,new_data_test10,interval='confidence',level=0.95)
+
 #fit.pred3<-predict(fit3,new_data_test3)
 #fit.pred5<-predict(fit5,new_data_test5)
 
 #Result
-View(data.frame(fit.pred9,test$year,test$price))
+View(data.frame(exp(fit.pred11),test$year,test$price))
 #View(data.frame(fit.pred3,test$year,test$price))
 
 
 #plotting the result
-plot(fit.pred9,test$price)
-
+plot(exp(data.frame(fit.pred11)$fit),test$price)
+plot(exp(data.frame(fit.pred11)$lwr),test$price)
+plot(exp(data.frame(fit.pred11)$upr),test$price)
 
 #removing outilers and again calculating the multiple regression
 outlierTest(fit9)
